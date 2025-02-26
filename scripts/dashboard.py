@@ -314,6 +314,11 @@ def create_stars_contributors_chart(df):
 def update_charts(n_clicks, n_intervals):
     df = load_data()
     
+    # Ensure data types are correct
+    df['stars'] = df['stars'].fillna(0).astype(int)
+    df['star_change'] = df['star_change'].fillna(0).astype(int)
+    df['contributor_count'] = df['contributor_count'].fillna(0).astype(int)
+    
     # Calculate summary statistics
     total_repos = len(df)
     total_stars = df['star_change'].sum()

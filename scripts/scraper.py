@@ -11,14 +11,14 @@ def scrape_github_trending(url="https://github.com/trending"):
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        print("[DEBUG] Successfully fetched trending page")
+        print("[INFO] Successfully fetched trending page")
     except requests.RequestException as e:
         print(f"[ERROR] Failed to fetch trending page: {e}")
         return []
 
     soup = BeautifulSoup(response.text, "html.parser")
     repo_list = soup.find_all("article", class_="Box-row")
-    print(f"[DEBUG] Found {len(repo_list)} repositories")
+    print(f"[INFO] Found {len(repo_list)} repositories")
 
     data = []
     for repo in repo_list:
@@ -28,7 +28,6 @@ def scrape_github_trending(url="https://github.com/trending"):
             .replace("\n", "")
             .replace(" ", "")
         )
-        print(f"\n[DEBUG] Processing repository: {full_name}")
 
         desc_tag = repo.find("p", class_="col-9")
         description = desc_tag.get_text(strip=True) if desc_tag else ""
@@ -42,35 +41,6 @@ def scrape_github_trending(url="https://github.com/trending"):
         star_change_tag = repo.find("span", class_="d-inline-block float-sm-right")
         raw_star_change = star_change_tag.get_text(strip=True) if star_change_tag else "0"
         star_change = convert_star_str_to_int(raw_star_change.split()[0]) if raw_star_change != "0" else 0
-
-        # Get topics with more specific selectors and debug info
-        topics = []
-        # Try finding topics in the main repository description area
-        topics_container = repo.find('div', {'class': ['f6', 'color-fg-muted', 'mt-2']})
-        if topics_container:
-            print("[DEBUG] Found topics container")
-            # Print the HTML content of the topics container for debugging
-            print(f"[DEBUG] Topics container HTML: {topics_container}")
-            
-            # Try multiple selectors for topic tags
-            topic_tags = topics_container.select('a[data-ga-click*="topic_tag"]')
-            if not topic_tags:
-                topic_tags = topics_container.find_all('a', class_='topic-tag')
-            if not topic_tags:
-                topic_tags = topics_container.select('a[href*="/topics/"]')
-                
-            if topic_tags:
-                topics = [tag.get_text(strip=True) for tag in topic_tags if tag.get_text(strip=True)]
-                print(f"[DEBUG] Found topics: {topics}")
-
-        # If no topics found, try alternative selectors
-        if not topics:
-            print("[DEBUG] Trying alternative topic selectors")
-            # Try finding topics in any location
-            all_topic_tags = repo.select('a[data-ga-click*="topic_tag"], a.topic-tag, a[href*="/topics/"]')
-            if all_topic_tags:
-                topics = [tag.get_text(strip=True) for tag in all_topic_tags if tag.get_text(strip=True)]
-                print(f"[DEBUG] Found topics with alternative selector: {topics}")
 
         contributors_url = f"https://github.com/{full_name}/contributors"
         contributor_count = 0
@@ -94,12 +64,11 @@ def scrape_github_trending(url="https://github.com/trending"):
             'language': language,
             'stars': stars,
             'star_change': star_change,
-            'topics': ','.join(topics),
             'contributor_count': contributor_count,
             'link': link
         })
 
-    print(f"\n[DEBUG] Total repositories processed: {len(data)}")
+    print(f"[INFO] Total repositories processed: {len(data)}")
     return data
 
 def convert_star_str_to_int(star_str):
@@ -112,19 +81,15 @@ def convert_star_str_to_int(star_str):
 
 def main():
     print("=== Start Scraping GitHub Trending ===")
-    # Khởi tạo DB + bảng (nếu chưa có)
     init_db()
 
     data = scrape_github_trending("https://github.com/trending")
-    print(f"[INFO] Lấy được {len(data)} repositories")
+    print(f"[INFO] Retrieved {len(data)} repositories")
 
-    # Tạo DataFrame và thêm cột scrape_date
     df = pd.DataFrame(data)
     df["scrape_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Append vào bảng
     append_data_to_db(df)
-
     print("=== Done ===")
 
 if __name__ == "__main__":
