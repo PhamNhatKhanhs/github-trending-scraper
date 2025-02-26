@@ -17,55 +17,49 @@ app.layout = html.Div([
             style={
                 'textAlign': 'center',
                 'color': 'white',
-                'fontFamily': 'Segoe UI, Helvetica, Arial, sans-serif',
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
                 'padding': '40px 20px',
                 'margin': '0',
                 'fontSize': '2.8rem',
                 'fontWeight': '600',
-                'letterSpacing': '0.5px'
+                'letterSpacing': '0.5px',
+                'textShadow': '0 2px 4px rgba(0,0,0,0.1)'
             })
     ], style={
         'background': 'linear-gradient(135deg, #2ea44f 0%, #1a7f37 100%)',
         'marginBottom': '40px',
-        'borderRadius': '0 0 20px 20px',
-        'boxShadow': '0 4px 6px rgba(0,0,0,0.1)'
+        'borderRadius': '0 0 30px 30px',
+        'boxShadow': '0 4px 15px rgba(0,0,0,0.1)'
     }),
     
-    # Summary statistics panel
+    # Summary statistics panel with improved grid layout
     html.Div([
         html.Div([
-            html.H3('Summary Statistics', style={'marginBottom': '15px'}),
+            html.H3('Summary Statistics', 
+                style={
+                    'marginBottom': '20px',
+                    'color': '#24292e',
+                    'fontSize': '1.8rem',
+                    'fontWeight': '600',
+                    'textAlign': 'center'
+                }),
             html.Div(id='summary-stats', style={
                 'display': 'grid',
-                'gridTemplateColumns': 'repeat(4, 1fr)',
-                'gap': '15px'
+                'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
+                'gap': '20px',
+                'padding': '10px'
             })
         ], style={
-            'backgroundColor': '#f6f8fa',
-            'padding': '20px',
-            'borderRadius': '8px',
-            'marginBottom': '30px'
+            'backgroundColor': '#ffffff',
+            'padding': '30px',
+            'borderRadius': '16px',
+            'boxShadow': '0 4px 12px rgba(0,0,0,0.05)',
+            'marginBottom': '40px',
+            'border': '1px solid #e1e4e8'
         })
     ]),
-    html.Div([
-        html.H1('GitHub Trending Analysis Dashboard', 
-                style={
-                    'textAlign': 'center',
-                    'color': '#24292e',
-                    'fontFamily': 'Segoe UI, Helvetica, Arial, sans-serif',
-                    'padding': '20px',
-                    'marginBottom': '20px',
-                    'borderBottom': '1px solid #e1e4e8',
-                    'fontSize': '2.5rem',
-                    'fontWeight': '600'
-                })
-    ], style={
-        'backgroundColor': '#f6f8fa',
-        'borderRadius': '8px',
-        'marginBottom': '30px',
-        'boxShadow': '0 1px 3px rgba(0,0,0,0.12)'
-    }),
     
+    # Refresh button and last update time with improved styling
     html.Div([
         html.Button(
             'Refresh Data',
@@ -75,13 +69,19 @@ app.layout = html.Div([
                 'backgroundColor': '#2ea44f',
                 'color': 'white',
                 'border': 'none',
-                'padding': '12px 24px',
-                'borderRadius': '6px',
+                'padding': '12px 28px',
+                'borderRadius': '8px',
                 'cursor': 'pointer',
-                'marginRight': '15px',
-                'fontWeight': 'bold',
-                'transition': 'background-color 0.3s ease',
-                'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'
+                'marginRight': '20px',
+                'fontWeight': '600',
+                'fontSize': '1rem',
+                'transition': 'all 0.3s ease',
+                'boxShadow': '0 2px 8px rgba(46,164,79,0.2)',
+                'hover': {
+                    'backgroundColor': '#2c974b',
+                    'transform': 'translateY(-1px)',
+                    'boxShadow': '0 4px 12px rgba(46,164,79,0.3)'
+                }
             }
         ),
         html.Div(
@@ -89,33 +89,35 @@ app.layout = html.Div([
             style={
                 'display': 'inline-block',
                 'color': '#586069',
-                'fontFamily': 'Segoe UI',
-                'fontSize': '0.9rem'
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
+                'fontSize': '0.95rem'
             }
         )
     ], style={
-        'marginBottom': '30px',
+        'marginBottom': '35px',
         'padding': '0 20px',
         'display': 'flex',
         'alignItems': 'center'
     }),
     
+    # Tabs with enhanced styling
     dcc.Tabs([
         dcc.Tab(
             label='Language Trends',
             children=[dcc.Graph(id='language-trend-chart')],
             style={
                 'padding': '20px',
-                'fontFamily': 'Segoe UI',
-                'color': '#24292e'
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
+                'color': '#586069',
+                'borderBottom': '2px solid transparent'
             },
             selected_style={
-                'backgroundColor': '#f6f8fa',
+                'backgroundColor': '#ffffff',
                 'borderTop': '3px solid #2ea44f',
                 'padding': '20px',
-                'fontFamily': 'Segoe UI',
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
                 'color': '#24292e',
-                'fontWeight': 'bold'
+                'fontWeight': '600'
             }
         ),
         dcc.Tab(
@@ -123,16 +125,17 @@ app.layout = html.Div([
             children=[dcc.Graph(id='star-changes-chart')],
             style={
                 'padding': '20px',
-                'fontFamily': 'Segoe UI',
-                'color': '#24292e'
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
+                'color': '#586069',
+                'borderBottom': '2px solid transparent'
             },
             selected_style={
-                'backgroundColor': '#f6f8fa',
+                'backgroundColor': '#ffffff',
                 'borderTop': '3px solid #2ea44f',
                 'padding': '20px',
-                'fontFamily': 'Segoe UI',
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
                 'color': '#24292e',
-                'fontWeight': 'bold'
+                'fontWeight': '600'
             }
         ),
         dcc.Tab(
@@ -140,24 +143,25 @@ app.layout = html.Div([
             children=[dcc.Graph(id='stars-contributors-chart')],
             style={
                 'padding': '20px',
-                'fontFamily': 'Segoe UI',
-                'color': '#24292e'
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
+                'color': '#586069',
+                'borderBottom': '2px solid transparent'
             },
             selected_style={
-                'backgroundColor': '#f6f8fa',
+                'backgroundColor': '#ffffff',
                 'borderTop': '3px solid #2ea44f',
                 'padding': '20px',
-                'fontFamily': 'Segoe UI',
+                'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif',
                 'color': '#24292e',
-                'fontWeight': 'bold'
+                'fontWeight': '600'
             }
         )
     ], style={
-        'margin': '0 20px',
-        'borderRadius': '8px',
+        'margin': '0 20px 40px 20px',
+        'borderRadius': '12px',
         'overflow': 'hidden',
         'border': '1px solid #e1e4e8',
-        'boxShadow': '0 2px 4px rgba(0,0,0,0.05)'
+        'boxShadow': '0 4px 12px rgba(0,0,0,0.05)'
     }),
     
     dcc.Interval(
@@ -166,11 +170,11 @@ app.layout = html.Div([
         n_intervals=0
     )
 ], style={
-    'backgroundColor': '#ffffff',
+    'backgroundColor': '#f6f8fa',
     'minHeight': '100vh',
     'margin': '0',
     'padding': '30px',
-    'fontFamily': 'Segoe UI'
+    'fontFamily': '"Segoe UI", system-ui, -apple-system, sans-serif'
 })
 
 def load_data():
@@ -196,14 +200,12 @@ def load_data():
         return pd.DataFrame()  # Return empty DataFrame on error
 
 def create_language_trend_chart(df):
-    # Get top 10 languages by total count
     top_languages = df.groupby('language').size().nlargest(10).index
-    # Filter data for top languages
     df_filtered = df[df['language'].isin(top_languages)]
     lang_trend = df_filtered.groupby(['scrape_date', 'language']).size().reset_index(name='count')
     
     fig = px.area(lang_trend, x='scrape_date', y='count', color='language',
-                  title='Top 10 Programming Languages Trends Over Time',
+                  title='Programming Language Trends',
                   groupnorm='percent')
     fig.update_layout(
         template='plotly_white',
@@ -213,10 +215,19 @@ def create_language_trend_chart(df):
         plot_bgcolor='white',
         paper_bgcolor='white',
         xaxis_title='Date',
-        yaxis_title='Number of Repositories',
+        yaxis_title='Percentage',
         legend_title='Language',
         hovermode='x unified',
-        font_family='Segoe UI'
+        font_family='Segoe UI',
+        margin=dict(l=40, r=40, t=60, b=40),
+        showlegend=True,
+        legend=dict(
+            orientation='h',
+            yanchor='bottom',
+            y=-0.2,
+            xanchor='center',
+            x=0.5
+        )
     )
     return fig
 
@@ -294,7 +305,7 @@ def create_stars_contributors_chart(df):
 @app.callback(
     [Output('language-trend-chart', 'figure'),
      Output('star-changes-chart', 'figure'),
-     Output('topic-chart', 'figure'),
+     Output('stars-contributors-chart', 'figure'),
      Output('last-update-time', 'children'),
      Output('summary-stats', 'children')],
     [Input('refresh-button', 'n_clicks'),
@@ -310,43 +321,48 @@ def update_charts(n_clicks, n_intervals):
     unique_languages = df['language'].nunique()
     
     summary_stats = []
-    for title, value in [
-        ('Total Repositories', f'{total_repos:,}'),
-        ('Total Stars Gained', f'{total_stars:,}'),
-        ('Avg Contributors', f'{avg_contributors:.1f}'),
-        ('Unique Languages', str(unique_languages))
+    for title, value, icon in [
+        ('Total Repositories', f'{total_repos:,}', '📚'),
+        ('Total Stars Gained', f'{total_stars:,}', '⭐'),
+        ('Avg Contributors', f'{avg_contributors:.1f}', '👥'),
+        ('Unique Languages', str(unique_languages), '💻')
     ]:
         summary_stats.append(html.Div([
-            html.H4(title, style={'color': '#24292e'}),
-            html.P(value, style={
-                'fontSize': '24px',
-                'fontWeight': 'bold',
+            html.Div(icon, style={
+                'fontSize': '2rem',
+                'marginBottom': '10px'
+            }),
+            html.H4(title, style={
                 'color': '#24292e',
-                'margin': '10px 0'
+                'fontSize': '1.1rem',
+                'marginBottom': '8px'
+            }),
+            html.P(value, style={
+                'fontSize': '1.8rem',
+                'fontWeight': '600',
+                'color': '#2ea44f',
+                'margin': '0'
             })
         ], style={
             'textAlign': 'center',
-            'padding': '20px',
+            'padding': '25px',
             'backgroundColor': '#ffffff',
-            'borderRadius': '8px',
-            'boxShadow': '0 4px 6px rgba(0,0,0,0.1)',
-            'transition': 'transform 0.2s ease',
-            ':hover': {
-                'transform': 'translateY(-5px)'
+            'borderRadius': '12px',
+            'boxShadow': '0 4px 12px rgba(0,0,0,0.05)',
+            'border': '1px solid #e1e4e8',
+            'transition': 'transform 0.2s ease, box-shadow 0.2s ease',
+            'hover': {
+                'transform': 'translateY(-5px)',
+                'boxShadow': '0 8px 16px rgba(0,0,0,0.1)'
             }
         }))
     
     last_update = f'Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
     
-    # Create charts with consistent styling
-    fig_lang = create_language_trend_chart(df)
-    fig_stars = create_star_changes_chart(df)
-    fig_topics = create_topic_chart(df)
-    
     return [
-        fig_lang,
-        fig_stars,
-        fig_topics,
+        create_language_trend_chart(df),
+        create_star_changes_chart(df),
+        create_stars_contributors_chart(df),
         last_update,
         summary_stats
     ]
