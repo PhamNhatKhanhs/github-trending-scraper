@@ -8,8 +8,8 @@ DB_PATH = os.path.join("db", "github_trending.db")
 
 def init_db():
     """
-    Tạo file DB và bảng (nếu chưa tồn tại).
-    Dùng bảng 'github_trending' để lưu nhiều lần scrape.
+    Create DB file and table if not exists.
+    Using 'github_trending' table to store multiple scrapes.
     """
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -22,6 +22,9 @@ def init_db():
         description TEXT,
         language TEXT,
         stars INTEGER,
+        star_change INTEGER,
+        topics TEXT,
+        contributor_count INTEGER,
         link TEXT
     );
     """
@@ -31,10 +34,9 @@ def init_db():
 
 def append_data_to_db(df):
     """
-    Ghi DataFrame vào bảng 'github_trending' theo kiểu append (không xóa dữ liệu cũ).
-    Thêm cột 'scrape_date' (ngày giờ) từ DF nếu cần.
+    Append DataFrame to 'github_trending' table (without deleting old data).
+    Add 'scrape_date' column (datetime) from DF if needed.
     """
-    # Kết nối
     conn = sqlite3.connect(DB_PATH)
     df.to_sql("github_trending", conn, if_exists="append", index=False)
     conn.close()

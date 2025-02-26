@@ -32,6 +32,36 @@ def scrape_github_trending(url="https://github.com/trending"):
         raw_stars = star_tag.get_text(strip=True) if star_tag else "0"
         stars = convert_star_str_to_int(raw_stars)
 
+        # Get weekly star changes
+        star_change_tag = repo.find("span", class_="d-inline-block float-sm-right")
+        raw_star_change = star_change_tag.get_text(strip=True) if star_change_tag else "0"
+        star_change = convert_star_str_to_int(raw_star_change.split()[0]) if raw_star_change != "0" else 0
+
+        # Get topics
+        topics = []
+        topics_url = f"https://github.com/{full_name}/topics"
+        try:
+            topics_response = requests.get(topics_url)
+            if topics_response.status_code == 200:
+                topics_soup = BeautifulSoup(topics_response.text, "html.parser")
+                topic_tags = topics_soup.find_all("a", class_="topic-tag")
+                topics = [tag.get_text(strip=True) for tag in topic_tags]
+        except:
+            pass
+
+        # Get contributor count
+        contributors_url = f"https://github.com/{full_name}/contributors"
+        contributor_count = 0
+        try:
+            contributors_response = requests.get(contributors_url)
+            if contributors_response.status_code == 200:
+                contributors_soup = BeautifulSoup(contributors_response.text, "html.parser")
+                contributor_count_tag = contributors_soup.find("span", class_="Counter")
+                if contributor_count_tag:
+                    contributor_count = int(contributor_count_tag.get_text(strip=True))
+        except:
+            pass
+
         link = "https://github.com/" + full_name
 
         data.append({
@@ -39,6 +69,9 @@ def scrape_github_trending(url="https://github.com/trending"):
             "description": description,
             "language": language,
             "stars": stars,
+            "star_change": star_change,
+            "topics": ",".join(topics),
+            "contributor_count": contributor_count,
             "link": link,
         })
 
