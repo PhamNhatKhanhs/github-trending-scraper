@@ -136,8 +136,8 @@ app.layout = html.Div([
             }
         ),
         dcc.Tab(
-            label='Topics',
-            children=[dcc.Graph(id='topic-chart')],
+            label='Stars vs Contributors',
+            children=[dcc.Graph(id='stars-contributors-chart')],
             style={
                 'padding': '20px',
                 'fontFamily': 'Segoe UI',
@@ -185,6 +185,11 @@ def load_data():
         df['star_change'] = df['star_change'].fillna(0)
         df['contributor_count'] = df['contributor_count'].fillna(0)
         
+        # Ensure topics are properly handled
+        df['topics'] = df['topics'].fillna('')  # Convert NaN to empty string
+        df['topics'] = df['topics'].astype(str)  # Convert all values to string
+        df['topics'] = df['topics'].apply(lambda x: x if x != 'nan' else '')  # Convert 'nan' string to empty string
+        
         return df
     except Exception as e:
         print(f"Error loading data: {e}")
@@ -197,8 +202,9 @@ def create_language_trend_chart(df):
     df_filtered = df[df['language'].isin(top_languages)]
     lang_trend = df_filtered.groupby(['scrape_date', 'language']).size().reset_index(name='count')
     
-    fig = px.line(lang_trend, x='scrape_date', y='count', color='language',
-                  title='Top 10 Programming Languages Trends Over Time')
+    fig = px.area(lang_trend, x='scrape_date', y='count', color='language',
+                  title='Top 10 Programming Languages Trends Over Time',
+                  groupnorm='percent')
     fig.update_layout(
         template='plotly_white',
         title_x=0.5,
@@ -234,48 +240,26 @@ def create_star_changes_chart(df):
     )
     return fig
 
-def create_topic_chart(df):
-    # Handle empty topics
-    all_topics = []
-    for topics_str in df['topics'].dropna():
-        if topics_str and isinstance(topics_str, str):
-            topics = [t.strip() for t in topics_str.split(',') if t.strip()]
-            all_topics.extend(topics)
-    
-    if not all_topics:
-        # Create an empty chart with a message if no topics
-        topic_df = pd.DataFrame({'topic': ['No topics available'], 'count': [1]})
-        fig = px.pie(
-            topic_df,
-            values='count',
-            names='topic',
-            title='Distribution of Repository Topics'
-        )
-    else:
-        # Filter out empty topics and get top 15
-        topic_counts = pd.Series([t for t in all_topics if t]).value_counts().head(15)
-        topic_df = pd.DataFrame({'topic': topic_counts.index, 'count': topic_counts.values})
-        
-        # Calculate percentages for hover text
-        total = topic_df['count'].sum()
-        topic_df['percentage'] = (topic_df['count'] / total * 100).round(1)
-        topic_df['hover_text'] = topic_df.apply(lambda x: f'{x["topic"]}: {x["count"]} ({x["percentage"]}%)', axis=1)
-        
-        fig = px.pie(
-            topic_df,
-            values='count',
-            names='topic',
-            title='Distribution of Repository Topics',
-            hover_data=['count', 'percentage'],
-            custom_data=['hover_text'],
-            hole=0.3  # Add a donut hole for better visualization
-        )
-        
-        fig.update_traces(
-            textposition='inside',
-            hovertemplate='%{customdata[0]}<extra></extra>'
-        )
-    
+def create_stars_contributors_chart(df):
+    # Create a scatter plot of stars vs contributors
+    fig = px.scatter(
+        df,
+        x='stars',
+        y='contributor_count',
+        color='language',
+        title='Repository Stars vs Contributors by Language',
+        hover_data=['full_name', 'star_change'],
+        labels={
+            'stars': 'Total Stars',
+            'contributor_count': 'Number of Contributors',
+            'language': 'Programming Language',
+            'full_name': 'Repository',
+            'star_change': 'Star Change'
+        },
+        color_discrete_sequence=px.colors.qualitative.Set3
+    )
+
+    # Update layout for consistent styling
     fig.update_layout(
         template='plotly_white',
         title_x=0.5,
@@ -291,8 +275,20 @@ def create_topic_chart(df):
             xanchor='center',
             x=0.5
         ),
-        font_family='Segoe UI'
+        font_family='Segoe UI',
+        hovermode='closest'
     )
+
+    # Update traces for better visualization
+    fig.update_traces(
+        marker=dict(size=10, opacity=0.7),
+        hovertemplate='<b>%{customdata[0]}</b><br>'
+                      'Stars: %{x:,}<br>'
+                      'Contributors: %{y:,}<br>'
+                      'Star Change: %{customdata[1]:+,}<br>'
+                      'Language: %{marker.color}<extra></extra>'
+    )
+
     return fig
 
 @app.callback(
