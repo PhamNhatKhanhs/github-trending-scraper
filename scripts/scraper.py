@@ -8,8 +8,12 @@ import os
 from db_utils import init_db, append_data_to_db
 
 def scrape_github_trending(url="https://github.com/trending"):
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"[ERROR] Failed to fetch trending page: {e}")
+        return []
 
     soup = BeautifulSoup(response.text, "html.parser")
     repo_list = soup.find_all("article", class_="Box-row")
@@ -41,26 +45,29 @@ def scrape_github_trending(url="https://github.com/trending"):
         topics = []
         topics_url = f"https://github.com/{full_name}/topics"
         try:
-            topics_response = requests.get(topics_url)
+            topics_response = requests.get(topics_url, timeout=5)
             if topics_response.status_code == 200:
                 topics_soup = BeautifulSoup(topics_response.text, "html.parser")
                 topic_tags = topics_soup.find_all("a", class_="topic-tag")
-                topics = [tag.get_text(strip=True) for tag in topic_tags]
-        except:
-            pass
+                topics = [tag.get_text(strip=True) for tag in topic_tags if tag.get_text(strip=True)]
+        except requests.RequestException as e:
+            print(f"[WARNING] Failed to fetch topics for {full_name}: {e}")
 
         # Get contributor count
         contributors_url = f"https://github.com/{full_name}/contributors"
         contributor_count = 0
         try:
-            contributors_response = requests.get(contributors_url)
+            contributors_response = requests.get(contributors_url, timeout=5)
             if contributors_response.status_code == 200:
                 contributors_soup = BeautifulSoup(contributors_response.text, "html.parser")
                 contributor_count_tag = contributors_soup.find("span", class_="Counter")
                 if contributor_count_tag:
-                    contributor_count = int(contributor_count_tag.get_text(strip=True))
-        except:
-            pass
+                    try:
+                        contributor_count = int(contributor_count_tag.get_text(strip=True))
+                    except ValueError:
+                        print(f"[WARNING] Invalid contributor count for {full_name}")
+        except requests.RequestException as e:
+            print(f"[WARNING] Failed to fetch contributors for {full_name}: {e}")
 
         link = "https://github.com/" + full_name
 

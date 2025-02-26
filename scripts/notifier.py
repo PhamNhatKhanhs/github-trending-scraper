@@ -11,13 +11,17 @@ from db_utils import DB_PATH
 load_dotenv()
 
 def get_trend_changes():
-    conn = sqlite3.connect(DB_PATH)
-    df = pd.read_sql("""
-        SELECT * FROM github_trending 
-        WHERE scrape_date >= date('now', '-1 day')
-        ORDER BY scrape_date DESC
-    """, conn)
-    conn.close()
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        df = pd.read_sql("""
+            SELECT * FROM github_trending 
+            WHERE scrape_date >= date('now', '-1 day')
+            ORDER BY scrape_date DESC
+        """, conn)
+        conn.close()
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch trend changes: {e}")
+        return None
     
     if df.empty:
         return None
@@ -26,11 +30,12 @@ def get_trend_changes():
     significant_changes = []
     
     # 1. New languages in trending
-    latest_languages = set(df.iloc[0]['language'].split(','))
-    previous_languages = set(df.iloc[-1]['language'].split(','))
-    new_languages = latest_languages - previous_languages
-    if new_languages:
-        significant_changes.append(f"New trending languages: {', '.join(new_languages)}")
+    if not df.empty and len(df) > 1:
+        latest_languages = set(df.iloc[0]['language'].split(',') if df.iloc[0]['language'] else [])
+        previous_languages = set(df.iloc[-1]['language'].split(',') if df.iloc[-1]['language'] else [])
+        new_languages = latest_languages - previous_languages
+        if new_languages:
+            significant_changes.append(f"New trending languages: {', '.join(new_languages)}")
     
     # 2. Repositories with dramatic star increases
     high_star_changes = df[df['star_change'] > 1000][['full_name', 'star_change']]
@@ -41,17 +46,16 @@ def get_trend_changes():
             )
     
     # 3. New trending topics
-    latest_topics = set()
-    previous_topics = set()
-    for topics in df.iloc[0]['topics'].dropna():
-        if topics:
-            latest_topics.update(topics.split(','))
-    for topics in df.iloc[-1]['topics'].dropna():
-        if topics:
-            previous_topics.update(topics.split(','))
-    new_topics = latest_topics - previous_topics
-    if new_topics:
-        significant_changes.append(f"New trending topics: {', '.join(new_topics)}")
+    if not df.empty and len(df) > 1:
+        latest_topics = set()
+        previous_topics = set()
+        if not pd.isna(df.iloc[0]['topics']):
+            latest_topics.update(t.strip() for t in df.iloc[0]['topics'].split(',') if t.strip())
+        if not pd.isna(df.iloc[-1]['topics']):
+            previous_topics.update(t.strip() for t in df.iloc[-1]['topics'].split(',') if t.strip())
+        new_topics = latest_topics - previous_topics
+        if new_topics:
+            significant_changes.append(f"New trending topics: {', '.join(new_topics)}")
     
     return significant_changes
 
