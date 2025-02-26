@@ -101,6 +101,28 @@ Kết quả phân tích được lưu trong thư mục `data/`:
 └── README.md            # Tài liệu hướng dẫn
 ```
 
+## 2. Công Nghệ và Framework Sử Dụng
+
+### 2.1. Framework Chính
+- **Dash**: Framework web để xây dựng dashboard tương tác
+- **Flask**: Framework web nhẹ làm nền tảng cho Dash
+- **Plotly**: Thư viện tạo biểu đồ tương tác
+- **APScheduler**: Quản lý và lập lịch các tác vụ tự động
+
+### 2.2. Thư viện Thu Thập và Xử Lý Dữ Liệu
+- **BeautifulSoup4**: Phân tích cú pháp HTML từ GitHub
+- **Requests**: Thực hiện các HTTP request
+- **Pandas**: Xử lý và phân tích dữ liệu
+- **SQLite**: Cơ sở dữ liệu quan hệ nhẹ để lưu trữ
+
+### 2.3. Thư viện Trực Quan Hóa
+- **Matplotlib**: Tạo biểu đồ tĩnh cơ bản
+- **Seaborn**: Tạo biểu đồ thống kê nâng cao
+
+### 2.4. Công Cụ Hỗ Trợ
+- **python-dotenv**: Quản lý biến môi trường
+- **email-validator**: Xác thực địa chỉ email
+
 ## 🔧 Xử lý lỗi thường gặp
 
 1. Lỗi khi cài đặt thư viện:
