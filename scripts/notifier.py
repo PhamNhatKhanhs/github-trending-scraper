@@ -1,3 +1,7 @@
+# scripts/notifier.py
+# Mô-đun gửi thông báo về những thay đổi đáng chú ý trên GitHub Trending
+# Phân tích và gửi email thông báo về các ngôn ngữ mới, sự thay đổi số sao và chủ đề mới
+
 import os
 import smtplib
 from email.mime.text import MIMEText
@@ -11,6 +15,9 @@ from db_utils import DB_PATH
 load_dotenv()
 
 def get_trend_changes():
+    # Hàm phân tích và lấy các thay đổi đáng chú ý từ dữ liệu GitHub Trending
+    # Trả về:
+    #   Danh sách các thay đổi quan trọng (ngôn ngữ mới, tăng số sao, chủ đề mới)
     try:
         conn = sqlite3.connect(DB_PATH)
         df = pd.read_sql("""
@@ -60,6 +67,9 @@ def get_trend_changes():
     return significant_changes
 
 def send_notification(changes):
+    # Hàm gửi email thông báo về các thay đổi đáng chú ý
+    # Tham số:
+    #   changes: Danh sách các thay đổi cần thông báo
     if not changes:
         return
         
@@ -90,6 +100,7 @@ def send_notification(changes):
         print(f"[ERROR] Failed to send notification: {str(e)}")
 
 def main():
+    # Hàm chính để kiểm tra và gửi thông báo về các thay đổi
     print("=== Checking for Significant Changes ===")
     changes = get_trend_changes()
     if changes:

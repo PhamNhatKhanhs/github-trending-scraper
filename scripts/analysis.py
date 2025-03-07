@@ -1,4 +1,7 @@
 # scripts/analysis.py
+# Mô-đun phân tích dữ liệu từ GitHub Trending
+# Thực hiện các phân tích về ngôn ngữ lập trình, thay đổi số sao và số lượng người đóng góp
+
 import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,6 +10,11 @@ from datetime import datetime, timedelta
 from db_utils import get_data_from_db
 
 def analyze_by_date():
+    # Hàm phân tích dữ liệu theo ngày
+    # Thực hiện các phân tích:
+    # 1. Phân bố ngôn ngữ lập trình
+    # 2. Thay đổi số sao của repository
+    # 3. Phân tích số lượng người đóng góp
     # Get data from database
     df = get_data_from_db()
     if df.empty:
@@ -58,6 +66,8 @@ def analyze_by_date():
         top_contributors = df.nlargest(1, 'contributor_count').iloc[0]
         f.write(f'3. Repository with Most Contributors: {top_contributors["full_name"]} with {top_contributors["contributor_count"]} contributors\n')
 def main():
+    # Hàm chính để thực thi quá trình phân tích dữ liệu
+    # Tạo các biểu đồ và báo cáo phân tích
     print("=== Starting GitHub Trending Analysis ===")
     analyze_by_date()
     print("=== Analysis Complete ===")

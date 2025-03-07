@@ -1,3 +1,7 @@
+# scripts/dashboard.py
+# Mô-đun tạo bảng điều khiển web để hiển thị phân tích GitHub Trending
+# Sử dụng Dash framework để tạo giao diện người dùng tương tác
+
 import dash
 from dash import html, dcc
 from dash.dependencies import Input, Output
@@ -7,9 +11,11 @@ import sqlite3
 from datetime import datetime, timedelta
 from db_utils import DB_PATH
 
+# Khởi tạo ứng dụng Dash
 app = dash.Dash(__name__)
 
-# Custom styles
+# Thiết lập giao diện người dùng với các thành phần tùy chỉnh
+# Sử dụng CSS Grid và Flexbox để tạo layout linh hoạt
 app.layout = html.Div([
     # Header with gradient background
     html.Div([
