@@ -17,9 +17,9 @@ app = dash.Dash(__name__)
 # Thiết lập giao diện người dùng với các thành phần tùy chỉnh
 # Sử dụng CSS Grid và Flexbox để tạo layout linh hoạt
 app.layout = html.Div([
-    # Header with gradient background
+    # Phần header với nền gradient
     html.Div([
-        html.H1('GitHub Trending Analysis', 
+        html.H1('Phân Tích GitHub Trending', 
             style={
                 'textAlign': 'center',
                 'color': 'white',
@@ -38,10 +38,10 @@ app.layout = html.Div([
         'boxShadow': '0 4px 15px rgba(0,0,0,0.1)'
     }),
     
-    # Summary statistics panel with improved grid layout
+    # Bảng thống kê tổng quan với layout grid cải tiến
     html.Div([
         html.Div([
-            html.H3('Summary Statistics', 
+            html.H3('Thống Kê Tổng Quan', 
                 style={
                     'marginBottom': '20px',
                     'color': '#24292e',
@@ -65,10 +65,10 @@ app.layout = html.Div([
         })
     ]),
     
-    # Refresh button and last update time with improved styling
+    # Nút làm mới và thời gian cập nhật cuối với style cải tiến
     html.Div([
         html.Button(
-            'Refresh Data',
+            'Làm Mới Dữ Liệu',
             id='refresh-button',
             n_clicks=0,
             style={
@@ -106,10 +106,10 @@ app.layout = html.Div([
         'alignItems': 'center'
     }),
     
-    # Tabs with enhanced styling
+    # Các tab với style cải tiến
     dcc.Tabs([
         dcc.Tab(
-            label='Language Trends',
+            label='Xu Hướng Ngôn Ngữ',
             children=[dcc.Graph(id='language-trend-chart')],
             style={
                 'padding': '20px',
@@ -127,7 +127,7 @@ app.layout = html.Div([
             }
         ),
         dcc.Tab(
-            label='Star Changes',
+            label='Thay Đổi Star',
             children=[dcc.Graph(id='star-changes-chart')],
             style={
                 'padding': '20px',
@@ -145,7 +145,7 @@ app.layout = html.Div([
             }
         ),
         dcc.Tab(
-            label='Stars vs Contributors',
+            label='Star và Người Đóng Góp',
             children=[dcc.Graph(id='stars-contributors-chart')],
             style={
                 'padding': '20px',
@@ -170,9 +170,10 @@ app.layout = html.Div([
         'boxShadow': '0 4px 12px rgba(0,0,0,0.05)'
     }),
     
+    # Cập nhật tự động mỗi 5 phút
     dcc.Interval(
         id='interval-component',
-        interval=300000,  # update every 5 minutes
+        interval=300000,  # cập nhật mỗi 5 phút
         n_intervals=0
     )
 ], style={
@@ -184,35 +185,56 @@ app.layout = html.Div([
 })
 
 def load_data():
+    """
+    Tải dữ liệu từ cơ sở dữ liệu và xử lý
+    """
     try:
         conn = sqlite3.connect(DB_PATH)
-        df = pd.read_sql("SELECT * FROM github_trending", conn)
+        df = pd.read_sql("SELECT * FROM repositories", conn)
         conn.close()
-        df['scrape_date'] = pd.to_datetime(df['scrape_date'])
         
-        # Clean data
-        df['language'] = df['language'].fillna('Unknown')
-        df['star_change'] = df['star_change'].fillna(0)
-        df['contributor_count'] = df['contributor_count'].fillna(0)
+        if df.empty:
+            print("Cảnh báo: Không tìm thấy dữ liệu trong cơ sở dữ liệu")
+            return pd.DataFrame()
+            
+        # Xử lý dữ liệu ngày tháng
+        df['scrape_date'] = pd.to_datetime(df['scrape_date'], errors='coerce')
+        df = df.dropna(subset=['scrape_date'])
         
-        # Ensure topics are properly handled
-        df['topics'] = df['topics'].fillna('')  # Convert NaN to empty string
-        df['topics'] = df['topics'].astype(str)  # Convert all values to string
-        df['topics'] = df['topics'].apply(lambda x: x if x != 'nan' else '')  # Convert 'nan' string to empty string
+        # Xử lý dữ liệu số
+        df['language'] = df['language'].fillna('Không xác định')
+        df['star_change'] = pd.to_numeric(df['star_change'], errors='coerce').fillna(0)
+        df['contributor_count'] = pd.to_numeric(df['contributor_count'], errors='coerce').fillna(0)
+        df['stars'] = pd.to_numeric(df['stars'], errors='coerce').fillna(0)
+        
+        # Chuyển đổi kiểu dữ liệu
+        df['star_change'] = df['star_change'].astype(int)
+        df['contributor_count'] = df['contributor_count'].astype(int)
+        df['stars'] = df['stars'].astype(int)
         
         return df
+    except sqlite3.Error as e:
+        print(f"Lỗi cơ sở dữ liệu: {e}")
+        return pd.DataFrame()
     except Exception as e:
-        print(f"Error loading data: {e}")
-        return pd.DataFrame()  # Return empty DataFrame on error
+        print(f"Lỗi khi tải dữ liệu: {e}")
+        return pd.DataFrame()
 
 def create_language_trend_chart(df):
+    """
+    Tạo biểu đồ xu hướng ngôn ngữ lập trình
+    """
+    # Lấy 10 ngôn ngữ phổ biến nhất
     top_languages = df.groupby('language').size().nlargest(10).index
     df_filtered = df[df['language'].isin(top_languages)]
     lang_trend = df_filtered.groupby(['scrape_date', 'language']).size().reset_index(name='count')
     
+    # Tạo biểu đồ
     fig = px.area(lang_trend, x='scrape_date', y='count', color='language',
-                  title='Programming Language Trends',
+                  title='Xu Hướng Ngôn Ngữ Lập Trình',
                   groupnorm='percent')
+    
+    # Cập nhật layout
     fig.update_layout(
         template='plotly_white',
         title_x=0.5,
@@ -220,9 +242,9 @@ def create_language_trend_chart(df):
         title_font_family='Segoe UI',
         plot_bgcolor='white',
         paper_bgcolor='white',
-        xaxis_title='Date',
-        yaxis_title='Percentage',
-        legend_title='Language',
+        xaxis_title='Ngày',
+        yaxis_title='Phần Trăm',
+        legend_title='Ngôn Ngữ',
         hovermode='x unified',
         font_family='Segoe UI',
         margin=dict(l=40, r=40, t=60, b=40),
@@ -238,10 +260,18 @@ def create_language_trend_chart(df):
     return fig
 
 def create_star_changes_chart(df):
+    """
+    Tạo biểu đồ thay đổi star theo ngôn ngữ
+    """
+    # Tính trung bình thay đổi star cho mỗi ngôn ngữ
     star_changes = df.groupby('language')['star_change'].mean().sort_values(ascending=False).head(10)
     star_df = pd.DataFrame({'language': star_changes.index, 'avg_stars': star_changes.values})
+    
+    # Tạo biểu đồ
     fig = px.bar(star_df, x='language', y='avg_stars',
-                 title='Average Star Changes by Language')
+                 title='Trung Bình Thay Đổi Star Theo Ngôn Ngữ')
+    
+    # Cập nhật layout
     fig.update_layout(
         template='plotly_white',
         title_x=0.5,
@@ -249,8 +279,8 @@ def create_star_changes_chart(df):
         title_font_family='Segoe UI',
         plot_bgcolor='white',
         paper_bgcolor='white',
-        xaxis_title='Programming Language',
-        yaxis_title='Average Star Change',
+        xaxis_title='Ngôn Ngữ Lập Trình',
+        yaxis_title='Trung Bình Thay Đổi Star',
         showlegend=False,
         bargap=0.2,
         font_family='Segoe UI'
@@ -258,25 +288,28 @@ def create_star_changes_chart(df):
     return fig
 
 def create_stars_contributors_chart(df):
-    # Create a scatter plot of stars vs contributors
+    """
+    Tạo biểu đồ phân tán giữa số star và số người đóng góp
+    """
+    # Tạo biểu đồ phân tán
     fig = px.scatter(
         df,
         x='stars',
         y='contributor_count',
         color='language',
-        title='Repository Stars vs Contributors by Language',
+        title='Star và Người Đóng Góp Theo Ngôn Ngữ',
         hover_data=['full_name', 'star_change'],
         labels={
-            'stars': 'Total Stars',
-            'contributor_count': 'Number of Contributors',
-            'language': 'Programming Language',
+            'stars': 'Tổng Số Star',
+            'contributor_count': 'Số Người Đóng Góp',
+            'language': 'Ngôn Ngữ Lập Trình',
             'full_name': 'Repository',
-            'star_change': 'Star Change'
+            'star_change': 'Thay Đổi Star'
         },
         color_discrete_sequence=px.colors.qualitative.Set3
     )
 
-    # Update layout for consistent styling
+    # Cập nhật layout
     fig.update_layout(
         template='plotly_white',
         title_x=0.5,
@@ -296,14 +329,14 @@ def create_stars_contributors_chart(df):
         hovermode='closest'
     )
 
-    # Update traces for better visualization
+    # Cập nhật hiển thị tooltip
     fig.update_traces(
         marker=dict(size=10, opacity=0.7),
         hovertemplate='<b>%{customdata[0]}</b><br>'
-                      'Stars: %{x:,}<br>'
-                      'Contributors: %{y:,}<br>'
-                      'Star Change: %{customdata[1]:+,}<br>'
-                      'Language: %{marker.color}<extra></extra>'
+                      'Star: %{x:,}<br>'
+                      'Người đóng góp: %{y:,}<br>'
+                      'Thay đổi star: %{customdata[1]:+,}<br>'
+                      'Ngôn ngữ: %{marker.color}<extra></extra>'
     )
 
     return fig
@@ -318,25 +351,24 @@ def create_stars_contributors_chart(df):
      Input('interval-component', 'n_intervals')]
 )
 def update_charts(n_clicks, n_intervals):
+    """
+    Cập nhật tất cả các biểu đồ và thống kê
+    """
     df = load_data()
     
-    # Ensure data types are correct
-    df['stars'] = df['stars'].fillna(0).astype(int)
-    df['star_change'] = df['star_change'].fillna(0).astype(int)
-    df['contributor_count'] = df['contributor_count'].fillna(0).astype(int)
-    
-    # Calculate summary statistics
+    # Tính toán thống kê tổng quan
     total_repos = len(df)
     total_stars = df['star_change'].sum()
     avg_contributors = df['contributor_count'].mean()
     unique_languages = df['language'].nunique()
     
+    # Tạo các thẻ thống kê
     summary_stats = []
     for title, value, icon in [
-        ('Total Repositories', f'{total_repos:,}', '📚'),
-        ('Total Stars Gained', f'{total_stars:,}', '⭐'),
-        ('Avg Contributors', f'{avg_contributors:.1f}', '👥'),
-        ('Unique Languages', str(unique_languages), '💻')
+        ('Tổng Số Repository', f'{total_repos:,}', '📚'),
+        ('Tổng Star Mới', f'{total_stars:,}', '⭐'),
+        ('Trung Bình Người Đóng Góp', f'{avg_contributors:.1f}', '👥'),
+        ('Số Ngôn Ngữ', str(unique_languages), '💻')
     ]:
         summary_stats.append(html.Div([
             html.Div(icon, style={
@@ -368,7 +400,7 @@ def update_charts(n_clicks, n_intervals):
             }
         }))
     
-    last_update = f'Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+    last_update = f'Cập nhật lần cuối: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
     
     return [
         create_language_trend_chart(df),
@@ -379,6 +411,9 @@ def update_charts(n_clicks, n_intervals):
     ]
 
 def main():
+    """
+    Hàm chính để chạy ứng dụng
+    """
     app.run_server(debug=True)
 
 if __name__ == '__main__':

@@ -15,44 +15,47 @@ from db_utils import DB_PATH
 load_dotenv()
 
 def get_trend_changes():
-    # Hàm phân tích và lấy các thay đổi đáng chú ý từ dữ liệu GitHub Trending
-    # Trả về:
-    #   Danh sách các thay đổi quan trọng (ngôn ngữ mới, tăng số sao, chủ đề mới)
+    """
+    Phân tích và lấy các thay đổi đáng chú ý từ dữ liệu GitHub Trending
+    
+    Trả về:
+        Danh sách các thay đổi quan trọng (ngôn ngữ mới, tăng số sao, chủ đề mới)
+    """
     try:
         conn = sqlite3.connect(DB_PATH)
         df = pd.read_sql("""
-            SELECT * FROM github_trending 
+            SELECT * FROM repositories 
             WHERE scrape_date >= date('now', '-1 day')
             ORDER BY scrape_date DESC
         """, conn)
         conn.close()
     except Exception as e:
-        print(f"[ERROR] Failed to fetch trend changes: {e}")
+        print(f"[LỖI] Không thể lấy dữ liệu thay đổi: {e}")
         return None
     
     if df.empty:
         return None
         
-    # Analyze significant changes
+    # Phân tích các thay đổi quan trọng
     significant_changes = []
     
-    # 1. New languages in trending
+    # 1. Các ngôn ngữ mới trong trending
     if not df.empty and len(df) > 1:
         latest_languages = set(df.iloc[0]['language'].split(',') if df.iloc[0]['language'] else [])
         previous_languages = set(df.iloc[-1]['language'].split(',') if df.iloc[-1]['language'] else [])
         new_languages = latest_languages - previous_languages
         if new_languages:
-            significant_changes.append(f"New trending languages: {', '.join(new_languages)}")
+            significant_changes.append(f"Ngôn ngữ mới trong trending: {', '.join(new_languages)}")
     
-    # 2. Repositories with dramatic star increases
+    # 2. Repository có số star tăng đột biến
     high_star_changes = df[df['star_change'] > 1000][['full_name', 'star_change']]
     if not high_star_changes.empty:
         for _, repo in high_star_changes.iterrows():
             significant_changes.append(
-                f"Repository {repo['full_name']} gained {repo['star_change']} stars"
+                f"Repository {repo['full_name']} tăng {repo['star_change']} star"
             )
     
-    # 3. New trending topics
+    # 3. Chủ đề mới trong trending
     if not df.empty and len(df) > 1:
         latest_topics = set()
         previous_topics = set()
@@ -62,14 +65,17 @@ def get_trend_changes():
             previous_topics.update(t.strip() for t in df.iloc[-1]['topics'].split(',') if t.strip())
         new_topics = latest_topics - previous_topics
         if new_topics:
-            significant_changes.append(f"New trending topics: {', '.join(new_topics)}")
+            significant_changes.append(f"Chủ đề mới trong trending: {', '.join(new_topics)}")
     
     return significant_changes
 
 def send_notification(changes):
-    # Hàm gửi email thông báo về các thay đổi đáng chú ý
-    # Tham số:
-    #   changes: Danh sách các thay đổi cần thông báo
+    """
+    Gửi email thông báo về các thay đổi đáng chú ý
+    
+    Tham số:
+        changes: Danh sách các thay đổi cần thông báo
+    """
     if not changes:
         return
         
@@ -78,15 +84,15 @@ def send_notification(changes):
     recipient_email = os.getenv('RECIPIENT_EMAIL')
     
     if not all([sender_email, sender_password, recipient_email]):
-        print("[ERROR] Email configuration missing. Please check .env file.")
+        print("[LỖI] Thiếu cấu hình email. Vui lòng kiểm tra file .env")
         return
     
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
-    msg['Subject'] = f'GitHub Trending Alert - {datetime.now().strftime("%Y-%m-%d")}'
+    msg['Subject'] = f'Thông Báo GitHub Trending - {datetime.now().strftime("%Y-%m-%d")}'
     
-    body = "\n\n".join(["GitHub Trending Significant Changes:", *changes])
+    body = "\n\n".join(["Những Thay Đổi Quan Trọng Trên GitHub Trending:", *changes])
     msg.attach(MIMEText(body, 'plain'))
     
     try:
@@ -95,19 +101,21 @@ def send_notification(changes):
         server.login(sender_email, sender_password)
         server.send_message(msg)
         server.quit()
-        print("[INFO] Notification email sent successfully")
+        print("[INFO] Đã gửi email thông báo thành công")
     except Exception as e:
-        print(f"[ERROR] Failed to send notification: {str(e)}")
+        print(f"[LỖI] Không thể gửi thông báo: {str(e)}")
 
 def main():
-    # Hàm chính để kiểm tra và gửi thông báo về các thay đổi
-    print("=== Checking for Significant Changes ===")
+    """
+    Hàm chính để kiểm tra và gửi thông báo về các thay đổi
+    """
+    print("=== Kiểm Tra Các Thay Đổi Quan Trọng ===")
     changes = get_trend_changes()
     if changes:
         send_notification(changes)
-        print(f"Found {len(changes)} significant changes")
+        print(f"Tìm thấy {len(changes)} thay đổi quan trọng")
     else:
-        print("No significant changes detected")
+        print("Không phát hiện thay đổi quan trọng nào")
 
 if __name__ == '__main__':
     main()

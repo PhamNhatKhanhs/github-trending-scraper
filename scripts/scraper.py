@@ -9,23 +9,27 @@ import os
 from db_utils import init_db, append_data_to_db
 
 def scrape_github_trending(url="https://github.com/trending"):
-    # Hàm thu thập thông tin các repository đang thịnh hành trên GitHub
-    # Tham số:
-    #   url: Đường dẫn đến trang GitHub Trending (mặc định: https://github.com/trending)
-    # Trả về:
-    #   Danh sách các repository với thông tin chi tiết
+    """
+    Thu thập thông tin các repository đang thịnh hành trên GitHub
+    
+    Tham số:
+        url: Đường dẫn đến trang GitHub Trending (mặc định: https://github.com/trending)
+    
+    Trả về:
+        Danh sách các repository với thông tin chi tiết
+    """
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        print("[INFO] Successfully fetched trending page")
+        print("[INFO] Đã tải thành công trang trending")
     except requests.RequestException as e:
-        print(f"[ERROR] Failed to fetch trending page: {e}")
+        print(f"[LỖI] Không thể tải trang trending: {e}")
         return []
 
     # Phân tích cú pháp HTML và tìm tất cả các repository
     soup = BeautifulSoup(response.text, "html.parser")
     repo_list = soup.find_all("article", class_="Box-row")
-    print(f"[INFO] Found {len(repo_list)} repositories")
+    print(f"[INFO] Tìm thấy {len(repo_list)} repository")
 
     data = []
     for repo in repo_list:
@@ -64,9 +68,9 @@ def scrape_github_trending(url="https://github.com/trending"):
                     try:
                         contributor_count = int(contributor_count_tag.get_text(strip=True))
                     except ValueError:
-                        print(f"[WARNING] Invalid contributor count for {full_name}")
+                        print(f"[CẢNH BÁO] Số lượng người đóng góp không hợp lệ cho {full_name}")
         except requests.RequestException as e:
-            print(f"[WARNING] Failed to fetch contributors for {full_name}: {e}")
+            print(f"[CẢNH BÁO] Không thể lấy thông tin người đóng góp cho {full_name}: {e}")
 
         # Tạo đường dẫn đến repository và thêm vào danh sách kết quả
         link = "https://github.com/" + full_name
@@ -80,12 +84,17 @@ def scrape_github_trending(url="https://github.com/trending"):
             'link': link
         })
 
-    print(f"[INFO] Total repositories processed: {len(data)}")
+    print(f"[INFO] Tổng số repository đã xử lý: {len(data)}")
     return data
 
 def convert_star_str_to_int(star_str):
-    # Hàm chuyển đổi chuỗi số sao thành số nguyên
-    # Ví dụ: "1.2k" -> 1200, "500" -> 500
+    """
+    Chuyển đổi chuỗi số sao thành số nguyên
+    
+    Ví dụ: 
+        "1.2k" -> 1200
+        "500" -> 500
+    """
     star_str = star_str.lower().replace(",", "")
     if "k" in star_str:
         num = float(star_str.replace("k", "")) * 1000
@@ -94,19 +103,21 @@ def convert_star_str_to_int(star_str):
     return int(num)
 
 def main():
-    # Hàm chính để thực thi quá trình thu thập dữ liệu
-    print("=== Start Scraping GitHub Trending ===")
+    """
+    Hàm chính để thực thi quá trình thu thập dữ liệu
+    """
+    print("=== Bắt đầu thu thập dữ liệu từ GitHub Trending ===")
     init_db()
 
     # Thu thập dữ liệu và lưu vào cơ sở dữ liệu
     data = scrape_github_trending("https://github.com/trending")
-    print(f"[INFO] Retrieved {len(data)} repositories")
+    print(f"[INFO] Đã lấy được {len(data)} repository")
 
     df = pd.DataFrame(data)
     df["scrape_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     append_data_to_db(df)
-    print("=== Done ===")
+    print("=== Hoàn thành ===")
 
 if __name__ == "__main__":
     main()
